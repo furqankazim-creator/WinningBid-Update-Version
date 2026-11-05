@@ -55,6 +55,7 @@ export default function SettingsPage() {
     } catch (e) { flash("organisation", false, errText(e)); }
   };
 
+  const profileProgress = Math.round([form.name, form.company, form.title, form.phone].filter(Boolean).length / 4 * 100);
   const signOut = () => { setSession(null); router.push("/sign-in"); };
   const isBidder = role === "Bidder";
 
@@ -78,6 +79,10 @@ export default function SettingsPage() {
                 <Field label="Job title"><Input className="w-full" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="e.g. Bid Manager" /></Field>
                 <Field label="Company"><Input className="w-full" value={form.company} onChange={(e) => setForm({ ...form, company: e.target.value })} /></Field>
                 <Field label="Phone"><Input className="w-full" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="+966 …" /></Field>
+              </div>
+              <div className="rounded border border-app-border bg-app-panel/50 p-3">
+                <div className="mb-2 flex items-center justify-between text-[11px] text-app-muted"><span>Profile completion</span><span>{profileProgress}%</span></div>
+                <div className="h-2 overflow-hidden rounded-full bg-app-border"><div className="h-full rounded-full bg-app-accent transition-all" style={{ width: `${profileProgress}%` }} /></div>
               </div>
               <div className="flex items-center gap-3"><Button variant="primary" onClick={saveProfile}>Save profile</Button>{say("profile")}</div>
             </Card>
