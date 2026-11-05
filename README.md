@@ -94,3 +94,5 @@ Chat mode talks to specialist agents grounded in the active tender's data. `POST
 4. True DOCX/XLSX/PPTX/ZIP package export (currently CSV / HTML-doc / JSON manifest).
 5. Approval-workflow builder and configurable Go/No-Go weights in the template builder.
 6. Invoices & payments (deferred by product owner).
+
+# WinningBid-Update-Version

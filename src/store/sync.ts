@@ -27,8 +27,8 @@ export async function hydrate(): Promise<"seeded" | "loaded"> {
   const patch: Record<string, unknown> = { currentUser: sess.user.name, org: { id: sess.org.id, name: orgInfo.org.name, industries: orgInfo.org.industries, plan: orgInfo.org.plan, currency: orgInfo.org.currency }, users: orgInfo.users.map((u) => ({ id: u.id, name: u.name, email: u.email, role: u.role, active: u.active })), profile: { ...st.profile, name: sess.user.name, email: sess.user.email } };
   const empty = SYNCED.every((c) => !(snap.collections[c] || []).length);
   let result: "seeded" | "loaded" = "loaded";
-  if (empty && !orgInfo.org.seeded) {
-    // Brand-new organisation: push the demo dataset so every page has content, then mark the org seeded.
+  if (empty) {
+    // Empty organisation: push the demo dataset so every page has content, then mark the org seeded.
     for (const c of SYNCED) { const docs = (st as unknown as Record<string, unknown[]>)[c] || []; if (docs.length) await api(`/api/data/${c}/sync`, { method: "PUT", json: { docs, full: true } }); last[c] = docs; }
     await api("/api/data/settings", { method: "PUT", json: { margin: st.margin, profile: patch.profile, lastExtraction: st.lastExtraction } });
     await api("/api/org", { method: "PATCH", json: { seeded: true } });

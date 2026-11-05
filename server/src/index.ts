@@ -50,7 +50,50 @@ export async function createApp() {
   return app;
 }
 
+let currentServer: import("http").Server | null = null;
+let isShuttingDown = false;
+
+function handleShutdown(signal: string) {
+  if (isShuttingDown) return;
+  isShuttingDown = true;
+  try {
+    if (currentServer) {
+      if (typeof (currentServer as any).closeAllConnections === "function") {
+        (currentServer as any).closeAllConnections();
+      }
+      if (typeof (currentServer as any).closeIdleConnections === "function") {
+        (currentServer as any).closeIdleConnections();
+      }
+      currentServer.close();
+    }
+  } catch {}
+  try {
+    mongoose.disconnect().catch(() => {});
+  } catch {}
+  // Exit cleanly and immediately so dev runners (tsx watch) restart instantly with 0 delay
+  process.exit(0);
+}
+
+process.once("SIGTERM", () => handleShutdown("SIGTERM"));
+process.once("SIGINT", () => handleShutdown("SIGINT"));
+process.once("SIGHUP", () => handleShutdown("SIGHUP"));
+
 if (process.argv[1]?.endsWith("index.ts") || process.argv[1]?.endsWith("index.js")) {
   assertProductionConfig();
-  connectDb().then(async () => { await ensureSuperAdmin(); const app = await createApp(); const port = Number(process.env.PORT) || 4005; app.listen(port, () => console.log(`[api] BidWinning API listening on :${port}`)); }).catch(async (e) => { console.error(e); if (process.env.NODE_ENV === "production") { console.error("[api] fatal: database unavailable, exiting"); process.exit(1); } console.log("[api] MongoDB connection failed, but starting app anyway for LanceDB."); const app = await createApp(); const port = Number(process.env.PORT) || 4005; app.listen(port, () => console.log(`[api] BidWinning API listening on :${port}`));; });
+  connectDb().then(async () => {
+    await ensureSuperAdmin();
+    const app = await createApp();
+    const port = Number(process.env.PORT) || 4005;
+    currentServer = app.listen(port, () => console.log(`[api] BidWinning API listening on :${port}`));
+  }).catch(async (e) => {
+    console.error(e);
+    if (process.env.NODE_ENV === "production") {
+      console.error("[api] fatal: database unavailable, exiting");
+      process.exit(1);
+    }
+    console.log("[api] MongoDB connection failed, but starting app anyway for LanceDB.");
+    const app = await createApp();
+    const port = Number(process.env.PORT) || 4005;
+    currentServer = app.listen(port, () => console.log(`[api] BidWinning API listening on :${port}`));
+  });
 }

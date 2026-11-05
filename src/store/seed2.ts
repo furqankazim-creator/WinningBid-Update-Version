@@ -119,6 +119,38 @@ export const aiSummaries: T.AISummary[] = [
     { term: "Payment Terms", finding: "Quarterly in arrears for managed service; 20% on go-live.", risk: "Medium", source: "RFP §12.1 p.60" }, { term: "Intellectual Property", finding: "Client claims IP in all customisations.", risk: "Medium", source: "RFP §14 p.66" },
     { term: "Liability", finding: "Capped at 100% annual fees.", risk: "Low", source: "RFP §13.2 p.64" }, { term: "Termination", finding: "90-day convenience termination.", risk: "Medium", source: "RFP §15 p.68" },
   ] },
+  { tenderId: "t2", generatedAt: d("2026-09-10T11:20:00"), model: "Pro", sections: {
+    "Executive Summary": ["Design and construction of 3 grade-separated interchanges and 14 km of 6-lane highway under FIDIC Yellow Book, USD 74M, closing 20 Nov 2026."],
+    "Scope Summary": ["Civil works, precast segmental bridges, drainage, high-mast highway lighting, and Intelligent Transportation System (ITS)."],
+    "Key Requirements": ["Minimum 40% in-country value (ICV)", "FIDIC Yellow Book 2017 conditions", "ISO 9001 and ISO 14001 certification", "120-day bid validity with bank guarantee"],
+    "Important Dates": ["Clarification deadline 15 Oct 2026", "Submission 20 Nov 2026", "Construction duration 28 months"],
+    "Commercial Requirements": ["Fixed price lump-sum in USD", "10% advance payment against bank guarantee", "10% retention with 5% released on Taking-Over"],
+    "Legal Requirements": ["Delay damages USD 35,000 per day capped at 10%", "Governing law: Dubai / UAE", "Dispute resolution via DIAC arbitration"],
+    "Missing Information": ["Geotechnical borehole logs at Interchange 2", "Utility diversion approvals and corridor handover schedule"],
+    "Potential Risks": ["Traffic management disruption penalties", "Steel reinforcement price fluctuations over 28 months"],
+    "Questions for Client": ["Please provide existing underground utility survey data", "Confirm if advance payment deduction begins on milestone 2."],
+  }, recommendation: { verdict: "GO", reasoning: "Core highway and bridge engineering capability. High margin potential with established local precast partners." },
+  contractTerms: [
+    { term: "Payment Terms", finding: "Monthly progress valuations, 56 days payment.", risk: "Medium", source: "FIDIC Yellow §14.7" },
+    { term: "Liquidated Damages", finding: "USD 35,000/day capped at 10% of Contract Price.", risk: "Medium", source: "Particular Conditions §8.7" },
+    { term: "Retention", finding: "10% retention, 5% released at Taking-Over Certificate.", risk: "Low", source: "Particular Conditions §14.3" },
+    { term: "Governing Law", finding: "Laws of the United Arab Emirates.", risk: "Low", source: "General Conditions §1.4" },
+  ] },
+  { tenderId: "t4", generatedAt: d("2026-06-15T08:45:00"), model: "Lite", sections: {
+    "Executive Summary": ["2-year call-off framework contract for structural steel fabrication and supply to Atlas Steel Fabrication, EUR 4.2M value."],
+    "Scope Summary": ["Heavy structural steel fabrication, surface treatment (shot-blasting and painting), non-destructive testing (NDT), DAP delivery."],
+    "Key Requirements": ["EN 1090-2 EXC3 execution class", "ISO 3834-2 comprehensive quality requirements for fusion welding", "DAP delivery Incoterms 2020"],
+    "Important Dates": ["Framework signature 10 Sep 2026", "Effective start 01 Oct 2026", "End date 30 Sep 2028"],
+    "Commercial Requirements": ["30% advance on individual call-off order, 70% within 45 days of delivery", "Fixed unit rates for 24 months"],
+    "Legal Requirements": ["Liability capped at 100% of call-off order value", "Liquidated damages 0.5% per week capped at 5%"],
+    "Potential Risks": ["Plate and beam raw material price increases", "Transportation capacity during peak logistics seasons"],
+  }, recommendation: { verdict: "GO", reasoning: "Repeatable low-risk manufacturing work with clear specifications and established European logistics." },
+  contractTerms: [
+    { term: "Payment Terms", finding: "30% on order, 70% within 45 days of delivery.", risk: "Low", source: "Framework Agreement §5" },
+    { term: "Warranty", finding: "24 months from delivery of each call-off batch.", risk: "Low", source: "Framework Agreement §9" },
+    { term: "Liability", finding: "Capped at 100% of the individual call-off order value.", risk: "Low", source: "Framework Agreement §12" },
+    { term: "Liquidated Damages", finding: "0.5% per week of delay, capped at 5%.", risk: "Low", source: "Framework Agreement §14" },
+  ] },
 ];
 
 export const reviews: T.Review[] = [

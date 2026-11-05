@@ -3,6 +3,7 @@ import { z } from "zod";
 import { Record, Settings, User, COLLECTIONS, KEYED_BY_TENDER, type CollectionName } from "../models/index.js";
 import { requireAuth, requireWrite, isBidder } from "../middleware/auth.js";
 import { mirrorRecords, unmirror } from "../mirror.js";
+import { seedUserWorkspaces } from "../seed-demo.js";
 
 export const data = Router();
 data.use(requireAuth);
@@ -22,6 +23,18 @@ const scope = async (req: Request) => {
 
 /** Full snapshot: every collection + settings. A bidder gets only their own workspace. */
 data.get("/state", async (req, res) => {
+  const { orgId, uid } = req.user!;
+  if (process.env.NODE_ENV !== "test" && process.env.ALLOW_OPEN_SIGNUP !== "1") {
+    try {
+      const tenderCount = await Record.countDocuments({ orgId, ownerId: uid, collection: "tenders" });
+      if (tenderCount < 3) {
+        const user = await User.findById(uid);
+        if (user) await seedUserWorkspaces(user);
+      }
+    } catch (err) {
+      console.error("[data] Auto-seed check failed:", err);
+    }
+  }
   const rows = await Record.find(await scope(req)).select("collection data").lean();
   const out: Record<string, unknown[]> = {}; for (const c of COLLECTIONS) out[c] = [];
   for (const r of rows) (out[r.collection] ||= []).push(r.data);
