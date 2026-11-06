@@ -28,7 +28,8 @@ export async function createApp() {
   if (process.env.NODE_ENV === "production") app.set("trust proxy", 1); // behind the host's load balancer, so limits key on the real client IP
   app.use(helmet());
   app.use(cors({ origin: (o, cb) => cb(null, !o || origins.includes(o) || origins.includes("*")), credentials: false }));
-  app.use(express.json({ limit: "25mb" }));
+  app.use(express.json({ limit: "200mb" }));
+  app.use(express.urlencoded({ limit: "200mb", extended: true }));
   if (process.env.NODE_ENV !== "test") app.use(morgan("tiny"));
   app.get("/health", (_req, res) => res.json({ ok: true, time: new Date().toISOString() }));
   const limit = (windowMs: number, max: number) => rateLimit({ windowMs, max, standardHeaders: true, legacyHeaders: false, message: { error: "Too many requests, slow down." } });

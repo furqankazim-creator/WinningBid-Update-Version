@@ -205,6 +205,11 @@ export const useStore = create<State>()(
           try {
             const fd = new FormData(); fd.append("file", f); fd.append("mode", "extract");
             const res = await authFetch("/api/analyze", { method: "POST", body: fd });
+            if (!res.ok) {
+              if (res.status === 413) throw new Error("HTTP 413 (File exceeds Nginx client_max_body_size limit)");
+              if (res.status === 401) throw new Error("Unauthenticated — please sign in as Super Admin");
+              throw new Error(`HTTP ${res.status}`);
+            }
             const j = await readNdjson<{ text: string; pages: number; ocr?: T.Doc["ocr"] }>(res, (e) => set((s) => ({ docs: patchIn(s.docs, id, { progress: e.stage === "ocr" ? `OCR ${e.done ?? 0}/${e.total ?? "?"}` : e.stage === "merge" ? "Merging OCR…" : "Reading text layer…" }) })));
             set((s) => ({ docs: patchIn(s.docs, id, { status: "INDEXED", text: String(j.text || "").slice(0, 900_000), pages: j.pages, ocr: j.ocr, progress: undefined }) }));
             get().audit("Uploaded", "Document", id, `${f.name} · ${j.pages} page(s)${j.ocr?.used ? ` · OCR recovered ${j.ocr.recoveredLines} line(s)` : ""}`);
@@ -248,7 +253,13 @@ export const useStore = create<State>()(
         if (!d.text) return "No extracted text for this document — re-upload it so it can be indexed.";
         try {
           const res = await authFetch("/api/analyze", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ mode: "document", name: d.name, text: d.text }) });
-          const j = await res.json(); if (!res.ok) return j.error || `HTTP ${res.status}`;
+          if (!res.ok) {
+            if (res.status === 401) return "Sign-in required: please sign in as Super Admin to run AI analysis";
+            if (res.status === 413) return "Document too large for web server limit (HTTP 413)";
+            const j = await res.json().catch(() => ({}));
+            return j.error || `HTTP ${res.status}`;
+          }
+          const j = await res.json();
           set((s) => ({ docs: patchIn(s.docs, id, { analysis: j.analysis }) }));
           get().logAI({ model: j.provider, promptVersion: "doc-analyze v3", task: "Document analysis", sources: [d.name], input: "Extract general information", outputSummary: `${Object.keys(j.analysis || {}).length} fields`, confidence: "Medium", reviewStatus: "Pending" });
           return null;
@@ -264,6 +275,12 @@ export const useStore = create<State>()(
           const text = docs.map((d) => `===== DOCUMENT: ${d.name} =====\n${d.text}`).join("\n\n");
           const context = { organisation: s0.org.name, capabilities: s0.capabilities.map((c) => `${c.name}: ${c.value}`), industryHint: t.industry, tenderName: t.name };
           const res = await authFetch("/api/analyze", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ mode: "tender", name: t.name, text, context, depth }) });
+          if (!res.ok) {
+            if (res.status === 401) return "Sign-in required: please sign in as Super Admin to run AI analysis";
+            if (res.status === 413) return "Tender documents exceed server upload limit (HTTP 413)";
+            const j = await res.json().catch(() => ({}));
+            return j.error || `HTTP ${res.status}`;
+          }
           const j = await readNdjson<{ result: Record<string, any>; provider: string; chars: number }>(res, (e) => set((st) => ({ analysisProgress: { pct: e.pct != null && e.pct >= 0 ? e.pct : st.analysisProgress?.pct ?? 0, stage: e.stage || "", msg: e.msg || "" } }))); // eslint-disable-line @typescript-eslint/no-explicit-any
           const r = j.result; const report = r.report as T.VerifiedReport;
           const now = new Date().toISOString(); const src = docs[0].name;
