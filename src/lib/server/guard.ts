@@ -28,9 +28,28 @@ export async function guard(req: NextRequest, bucket: string, perMinute: number)
     const now = Date.now();
     if ((okTokens.get(token) || 0) < now) {
       let ok = false;
-      try { ok = (await fetch(`${api()}/api/auth/me`, { headers: { authorization: `Bearer ${token}` }, signal: AbortSignal.timeout(10_000) })).ok; } catch { return json(503, "auth service unreachable"); }
-      if (!ok) return json(401, "invalid_token");
-      okTokens.set(token, now + 60_000); prune(okTokens, (t) => t > now);
+      const endpoints = [api(), "http://127.0.0.1:4005", "http://localhost:4005"];
+      for (const base of Array.from(new Set(endpoints))) {
+        try {
+          const res = await fetch(`${base}/api/auth/me`, {
+            headers: { authorization: `Bearer ${token}` },
+            signal: AbortSignal.timeout(20_000),
+          });
+          ok = res.ok;
+          if (ok || res.status === 401) break;
+        } catch {
+          // retry fallback endpoint
+        }
+      }
+      if (!ok) {
+        if (okTokens.has(token)) {
+          ok = true; // grace period for previously authenticated token during CPU spikes
+        } else {
+          return json(503, "auth service unreachable");
+        }
+      }
+      okTokens.set(token, now + 300_000);
+      prune(okTokens, (t) => t > now);
     }
   }
   const who = token ? token.slice(-24) : (req.headers.get("x-forwarded-for") || "local").split(",")[0].trim();

@@ -132,7 +132,8 @@ verified.post("/retrieve", async (req, res, next) => {
         const e = ix.entries.find((x) => x.name === row.standardName && x.folder === row.folder);
         const code = e?.code ?? null;
         if (code && !activeNames.has(row.standardName)) return; // superseded revision of a coded standard
-        const cos = 1 - (row._distance ?? 1); // queries use cosine distance
+        const dist = Number(row._distance ?? 2);
+        const cos = Math.max(0, Math.min(1, 1 - (dist * dist) / 2)); // normalized L2 distance converted to cosine
         const rTok = tokens(text); let hit = 0; for (const w of rTok) if (qTok.has(w)) hit++;
         const lex = rTok.size ? hit / Math.min(rTok.size, 25) : 0;
         const normative = /\b(shall|must|should|required|prohibited|not be permitted)\b/i.test(text) ? 0.08 : 0;
@@ -146,11 +147,11 @@ verified.post("/retrieve", async (req, res, next) => {
       // 1) rules from standards the tender itself cites (direct citation) — searched inside those standards only
       const cited = (it.codes || []).map((c) => ix.chosen.get(keyOf(c))).filter((e): e is Entry => !!e && e.folder === STANDARDS_FOLDER);
       if (cited.length) {
-        const rows = await t.search(qv).distanceType("cosine").where(`\`standardName\` IN (${cited.map((e) => sqlStr(e.name)).join(",")})`).limit(10).toArray();
+        const rows = await t.search(qv).distanceType("l2").where(`\`standardName\` IN (${cited.map((e) => sqlStr(e.name)).join(",")})`).limit(10).toArray();
         rows.forEach((r: any) => add(r, true));
       }
       // 2) whole-library semantic search, standards folder only
-      const rows2 = await t.search(qv).distanceType("cosine").where(`folder = ${sqlStr(STANDARDS_FOLDER)}`).limit(20).toArray();
+      const rows2 = await t.search(qv).distanceType("l2").where(`folder = ${sqlStr(STANDARDS_FOLDER)}`).limit(20).toArray();
       rows2.forEach((r: any) => add(r, false));
       const rules = [...found.values()].sort((a, b) => Number(b.direct) - Number(a.direct) || b.score - a.score).slice(0, k);
       results.push({ id: it.id, rules });
