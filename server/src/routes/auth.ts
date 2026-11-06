@@ -22,11 +22,16 @@ auth.post("/signup", async (req, res) => {
     if (inv.email !== email.toLowerCase()) return res.status(400).json({ error: `This invite was issued to ${inv.email}` });
     orgId = inv.orgId; role = inv.role; inv.acceptedAt = new Date(); await inv.save();
   } else {
-    if (process.env.ALLOW_OPEN_SIGNUP !== "1") return res.status(403).json({ error: "Sign-up is by invitation only. Ask your administrator for an invite link." });
+    if (process.env.ALLOW_OPEN_SIGNUP === "0") return res.status(403).json({ error: "Sign-up is by invitation only. Ask your administrator for an invite link." });
     if (!organisation) return res.status(400).json({ error: "Organisation name is required" });
     orgId = (await Org.create({ name: organisation, industries: [] }))._id;
   }
   const user = await User.create({ orgId, name, email, passwordHash: await bcrypt.hash(password, 10), role, lastLoginAt: new Date() });
+  try {
+    await seedUserWorkspaces(user);
+  } catch (err) {
+    console.error("[auth] Failed to seed workspaces on signup:", err);
+  }
   const org = await Org.findById(orgId);
   res.status(201).json({ token: tokenFor(user), user: pub(user), org: { id: String(org!._id), name: org!.name, plan: org!.plan, currency: org!.currency, industries: org!.industries, seeded: org!.seeded } });
 });
@@ -38,7 +43,7 @@ auth.post("/login", async (req, res) => {
   if (!user || !(await bcrypt.compare(body.data.password, user.passwordHash))) return res.status(401).json({ error: "Invalid email or password" });
   if (!user.active) return res.status(403).json({ error: "Account deactivated" });
   user.lastLoginAt = new Date(); await user.save();
-  if (process.env.NODE_ENV !== "test" && process.env.ALLOW_OPEN_SIGNUP !== "1") {
+  if (process.env.NODE_ENV !== "test") {
     try {
       const count = await DataRecord.countDocuments({ orgId: user.orgId, ownerId: user._id, collection: "tenders" });
       if (count < 3) await seedUserWorkspaces(user);
@@ -52,7 +57,7 @@ auth.post("/login", async (req, res) => {
 
 auth.get("/me", requireAuth, async (req, res) => {
   const user = await User.findById(req.user!.uid); if (!user) return res.status(404).json({ error: "not found" });
-  if (process.env.NODE_ENV !== "test" && process.env.ALLOW_OPEN_SIGNUP !== "1") {
+  if (process.env.NODE_ENV !== "test") {
     try {
       const count = await DataRecord.countDocuments({ orgId: user.orgId, ownerId: user._id, collection: "tenders" });
       if (count < 3) await seedUserWorkspaces(user);
