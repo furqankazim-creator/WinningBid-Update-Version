@@ -8,3 +8,4 @@ out
 .vercel
 .ocr-cache
 !.env.production.example
+*.tsbuildinfo
