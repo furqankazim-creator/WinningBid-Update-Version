@@ -28,7 +28,12 @@ export async function api<T = unknown>(path: string, init: RequestInit & { json?
   const headers: Record<string, string> = { ...(rest.headers as Record<string, string> || {}) };
   if (json !== undefined) headers["content-type"] = "application/json";
   if (auth) { const s = getSession(); if (s?.token) headers.authorization = `Bearer ${s.token}`; }
-  const res = await fetch(API_URL + path, { ...rest, headers, body: json !== undefined ? JSON.stringify(json) : rest.body });
+  let res: Response;
+  try {
+    res = await fetch(API_URL + path, { ...rest, headers, body: json !== undefined ? JSON.stringify(json) : rest.body });
+  } catch (err) {
+    throw new ApiError(0, err instanceof Error ? err.message : "API server unreachable");
+  }
   const body = await res.json().catch(() => ({}));
   if (!res.ok) { if (res.status === 401 && auth) { setSession(null); if (typeof window !== "undefined" && location.pathname.startsWith("/app")) location.href = "/sign-in?expired=1"; } throw new ApiError(res.status, (body as { error?: string }).error || `HTTP ${res.status}`); }
   return body as T;
