@@ -2,7 +2,10 @@
 import { useEffect, useState } from "react";
 /** Thin client for the BidWinning Express API. When NEXT_PUBLIC_API_URL is unset the app runs in local demo mode. */
 export const API_URL = (process.env.NEXT_PUBLIC_API_URL || "").replace(/\/$/, "");
-export const apiEnabled = () => !!API_URL;
+export const apiEnabled = () => {
+  if (process.env.NEXT_PUBLIC_DEMO_MODE === "1") return false;
+  return !!API_URL || process.env.NODE_ENV === "production" || process.env.NEXT_PUBLIC_ENABLE_API === "1";
+};
 
 export interface Session { token: string; user: { id: string; name: string; email: string; role: string; orgId: string; company?: string; phone?: string; title?: string; lastLoginAt?: string; createdAt?: string }; org: { id: string; name: string; plan: string; currency: string; industries: string[]; seeded: boolean }; }
 const KEY = "vq.session";

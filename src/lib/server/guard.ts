@@ -5,7 +5,7 @@ import type { NextRequest } from "next/server";
  * The user's JWT is verified by asking the Express API (/api/auth/me), so this server never holds JWT_SECRET.
  * Local demo mode (no NEXT_PUBLIC_API_URL, not production) skips the login check but is still rate limited.
  */
-const api = () => process.env.STANDARDS_API_URL || "http://localhost:4005";
+const api = () => process.env.BACKEND_API_URL || process.env.STANDARDS_API_URL || "http://127.0.0.1:4005";
 const demo = () => !process.env.NEXT_PUBLIC_API_URL && process.env.NODE_ENV !== "production";
 
 /** Headers for server-to-server calls from this Next.js server to the Express API. */
