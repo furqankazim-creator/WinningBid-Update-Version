@@ -35,12 +35,12 @@ function AuthCardInner({ mode }: { mode: "sign-in" | "sign-up" }) {
         <h1 className="mt-8 font-display text-3xl">{mode === "sign-in" ? "Welcome back." : invite ? `Join ${invite.organisation}` : "Create your organisation."}</h1>
         <p className="mt-2 text-sm text-muted">{mode === "sign-in" ? `Sign in to your ${brand.company} workspace.` : invite ? `You were invited as ${invite.role}.` : "Your organisation is created and you can invite your team. 3-day trial, no charge until it ends."}</p>
         {expired && <p className="mt-3 text-xs text-accent">Your session expired — please sign in again.</p>}
-        {!apiEnabled() && <p className="mt-3 rounded border border-line px-3 py-2 text-xs text-muted">Demo mode: no API configured (NEXT_PUBLIC_API_URL). Any email/password opens the sample workspace stored in this browser.</p>}
+        {!apiEnabled() && process.env.NODE_ENV !== "production" && <p className="mt-3 rounded border border-line px-3 py-2 text-xs text-muted">Demo mode: no API configured (NEXT_PUBLIC_API_URL). Any email/password opens the sample workspace stored in this browser.</p>}
         <form onSubmit={submit} className="mt-6 space-y-3">
           {mode === "sign-up" && <input required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Full name" className={field} />}
-          {mode === "sign-up" && !inviteToken && apiEnabled() && <input required value={form.organisation} onChange={(e) => setForm({ ...form, organisation: e.target.value })} placeholder="Organisation name" className={field} />}
+          {mode === "sign-up" && !inviteToken && <input required value={form.organisation} onChange={(e) => setForm({ ...form, organisation: e.target.value })} placeholder="Organisation name" className={field} />}
           <input required type="email" value={form.email} readOnly={!!invite} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="Work email" className={field} />
-          <input required type="password" minLength={apiEnabled() ? 8 : 1} value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder={mode === "sign-up" ? "Password (min 8 characters)" : "Password"} className={field} />
+          <input required type="password" minLength={mode === "sign-up" ? 8 : 1} value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder={mode === "sign-up" ? "Password (min 8 characters)" : "Password"} className={field} />
           {err && <p className="text-sm text-[#c2413a]">{err}</p>}
           <button disabled={busy} className="flex w-full items-center justify-center gap-2 rounded-sm bg-navy py-2.5 text-sm text-cream hover:bg-ink disabled:opacity-60">{busy && <Loader2 size={14} className="animate-spin" />}{mode === "sign-in" ? "Sign in" : invite ? "Accept invite & create account" : "Create organisation"}</button>
         </form>
